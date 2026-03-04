@@ -14,14 +14,9 @@ interface NewsCardProps {
     descendants?: number;
   };
   index: number;
-  mode?: "normal" | "viral";
 }
 
-export default function NewsCard({
-  story,
-  index,
-  mode = "normal",
-}: NewsCardProps) {
+export default function NewsCard({ story, index }: NewsCardProps) {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -30,7 +25,6 @@ export default function NewsCard({
 
   const hnUrl = `https://news.ycombinator.com/item?id=${story.id}`;
   const storyUrl = story.url || hnUrl;
-  const isViral = mode === "viral";
 
   const domain = story.url
     ? new URL(story.url).hostname.replace("www.", "")
@@ -51,14 +45,12 @@ export default function NewsCard({
     setLoading(true);
     setShowContent(true);
     try {
-      const endpoints = {
-        twitter: isViral ? "/api/generate-viral-tweet" : "/api/generate-tweet",
-        linkedin: isViral
-          ? "/api/generate-viral-linkedin"
-          : "/api/generate-linkedin",
-      };
+      const endpoint =
+        platform === "twitter"
+          ? "/api/generate-tweet"
+          : "/api/generate-linkedin";
 
-      const res = await fetch(endpoints[platform], {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -100,13 +92,7 @@ export default function NewsCard({
   };
 
   return (
-    <div
-      className={`group bg-white dark:bg-zinc-900 rounded-xl border transition-all duration-200 hover:shadow-lg ${
-        isViral
-          ? "border-zinc-200 dark:border-zinc-800 hover:border-rose-400 dark:hover:border-rose-600 hover:shadow-rose-500/10"
-          : "border-zinc-200 dark:border-zinc-800 hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-orange-500/5"
-      }`}
-    >
+    <div className="group bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 transition-all duration-200 hover:shadow-lg hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-orange-500/5">
       <div className="p-5">
         {/* Header */}
         <div className="flex items-start gap-4">
@@ -231,11 +217,7 @@ export default function NewsCard({
           <button
             onClick={generateTweet}
             disabled={loading}
-            className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-all disabled:opacity-50 ${
-              isViral
-                ? "bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-700"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-sky-50 hover:text-sky-600 dark:hover:bg-sky-950/30 dark:hover:text-sky-400 border-zinc-200 dark:border-zinc-700 hover:border-sky-300 dark:hover:border-sky-800"
-            }`}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition-all disabled:opacity-50 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-sky-50 hover:text-sky-600 dark:hover:bg-sky-950/30 dark:hover:text-sky-400 border-zinc-200 dark:border-zinc-700 hover:border-sky-300 dark:hover:border-sky-800"
           >
             {loading ? (
               <>
@@ -255,12 +237,7 @@ export default function NewsCard({
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                   />
                 </svg>
-                {isViral ? "Cooking up chaos..." : "AI is writing..."}
-              </>
-            ) : isViral ? (
-              <>
-                <span>🔥</span>
-                Go Viral
+                AI is writing...
               </>
             ) : (
               <>

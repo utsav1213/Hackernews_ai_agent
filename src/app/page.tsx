@@ -1,4 +1,4 @@
-import { fetchTopStories, isTechStory } from "@/lib/hackernews";
+import { fetchTopStories } from "@/lib/hackernews";
 import AgentPanel from "@/components/AgentPanel";
 import NewsTabs from "@/components/NewsTabs";
 
@@ -7,7 +7,6 @@ export const revalidate = 300; // ISR: regenerate every 5 minutes
 export default async function Home() {
   const raw = await fetchTopStories(60);
   const stories = [...raw].sort((a, b) => b.time - a.time);
-  const techStories = stories.filter(isTechStory);
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -56,7 +55,7 @@ export default async function Home() {
         <AgentPanel />
 
         {/* News Sections */}
-        <NewsTabs allStories={stories} techStories={techStories} />
+        <NewsTabs allStories={stories} />
       </main>
 
       {/* Footer */}
