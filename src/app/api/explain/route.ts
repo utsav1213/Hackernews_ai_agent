@@ -3,7 +3,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 
 const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
-const model = openrouter("google/gemma-3-27b-it:free");
+const model = openrouter("meta-llama/llama-3.3-70b-instruct");
 
 export async function POST(req: NextRequest) {
   try {
