@@ -13,31 +13,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing title" }, { status: 400 });
     }
 
-    const prompt = `You are an expert at explaining complex tech and news topics in simple, engaging language.
-
-Analyze this Hacker News story and respond with a single valid JSON object — no markdown, no code fences, no extra text.
+    const prompt = `You are an expert tech analyst and educator.
+Analyze this Hacker News story and provide a high-quality, insightful explanation.
 
 Story details:
 Title: ${title}
 ${url ? `URL: ${url}` : ""}
-${text ? `Story text: ${text.replace(/<[^>]+>/g, " ").slice(0, 1500)}` : ""}
+${text ? `Story text: ${text.replace(/<[^>]+>/g, " ").slice(0, 2000)}` : ""}
 
-Return exactly this JSON structure:
+Return exactly this JSON structure (valid JSON, no markdown):
 {
-  "oneLiner": "One sentence capturing what this news is about",
-  "summary": "Plain-English explanation in 3-5 sentences for a smart 15-year-old",
-  "keyPoints": ["point 1", "point 2", "point 3"],
-  "diagram": "An ASCII diagram/flowchart specific to this topic using characters like ─ │ ┌ ┐ └ ┘ ├ ┤ → ● and newlines",
-  "realWorldExample": "A concrete relatable analogy that makes the concept click",
-  "whyItMatters": "2-3 sentences on the impact and significance of this news",
-  "techLevel": "beginner" 
+  "oneLiner": "A concise, powerful sentence summarizing the core news.",
+  "summary": "A detailed, structured explanation (4-6 sentences). Don't just simplify it—explain the technical context, how it works, and why it's trending. Assume the reader is smart but needs context.",
+  "keyPoints": ["Crucial insight 1", "Crucial insight 2", "Crucial insight 3", "Crucial insight 4"],
+  "realWorldExample": "A strong analogy or example to make the concept concrete.",
+  "whyItMatters": "A deep dive into the implications. Who does this affect? What does it change in the industry? Why should a developer care?",
+  "techLevel": "intermediate"
 }
 
 Rules:
 - techLevel must be exactly one of: "beginner", "intermediate", "advanced"
-- keyPoints must have 3 to 6 items
-- diagram must be a meaningful multi-line ASCII visual relevant to this specific story, not generic
-- Output raw JSON only, starting with { and ending with }`;
+- keyPoints must have 3 to 5 items, focusing on insights, not just facts
+- Focus on *effectiveness*—the reader should walk away understanding the "what", "how", and "so what".
+- Output raw JSON only.`;
 
     const { text: rawText } = await generateText({ model, prompt });
 
