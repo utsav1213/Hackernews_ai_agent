@@ -1,6 +1,6 @@
 import { fetchTopStories, getHNUrl } from "./hackernews";
 
-async function generateTextFromGemini(prompt: string, maxOutputTokens = 512) {
+async function generateTextFromGemini(prompt: string) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
   const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
@@ -101,9 +101,7 @@ export interface TweetResult {
   reasoning: string;
 }
 
-export async function runTweetAgent(
-  _userPrompt?: string,
-): Promise<TweetResult[]> {
+export async function runTweetAgent(): Promise<TweetResult[]> {
   const rawStories = await fetchTopStories(30);
   const stories = rawStories.map((s) => ({
     id: s.id,

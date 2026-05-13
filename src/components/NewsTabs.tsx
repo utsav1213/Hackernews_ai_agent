@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import NewsCard from "@/components/NewsCard";
 import type { HNStory } from "@/lib/hackernews";
 

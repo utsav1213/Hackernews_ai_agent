@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 
-interface AgentPanelProps {}
-
 interface AgentTweet {
   story: {
     id: number;
@@ -16,7 +14,7 @@ interface AgentTweet {
   reasoning: string;
 }
 
-export default function   AgentPanel({}: AgentPanelProps) {
+export default function AgentPanel() {
   const [tweets, setTweets] = useState<AgentTweet[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
