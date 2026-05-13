@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText } from "ai";
-
-const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
-const model = openrouter("meta-llama/llama-3.3-70b-instruct");
+import { generateTextFromGemini } from "@/lib/ai-agent";
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,7 +33,7 @@ Rules:
 - Focus on *effectiveness*—the reader should walk away understanding the "what", "how", and "so what".
 - Output raw JSON only.`;
 
-    const { text: rawText } = await generateText({ model, prompt });
+    const rawText = await generateTextFromGemini(prompt, 1200);
 
     // Extract JSON — strip any accidental markdown fences
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);

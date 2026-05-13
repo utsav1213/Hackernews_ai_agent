@@ -3,13 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
-    "@openrouter/ai-sdk-provider": "^2.2.3",
     "ai": "^6.0.99",
     "next": "16.1.6",
     "react": "19.2.3",

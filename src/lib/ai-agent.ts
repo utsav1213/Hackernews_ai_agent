@@ -1,9 +1,35 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText } from "ai";
 import { fetchTopStories, getHNUrl } from "./hackernews";
 
-const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
-const model = openrouter("meta-llama/llama-3.3-70b-instruct");
+async function generateTextFromGemini(prompt: string, maxOutputTokens = 512) {
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+
+  if (!GEMINI_API_KEY) throw new Error("Missing GEMINI_API_KEY");
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.2,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Gemini API error: ${res.status} ${body}`);
+  }
+
+  const json = await res.json();
+  const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  return text;
+}
 
 export interface TweetResult {
   story: {
@@ -20,8 +46,6 @@ export interface TweetResult {
 export async function runTweetAgent(
   _userPrompt?: string,
 ): Promise<TweetResult[]> {
-  // Step 1: Fetch stories directly — avoids asking the model to orchestrate
-  // dozens of sequential tool calls (which causes Groq's "failed_generation" error).
   const rawStories = await fetchTopStories(30);
   const stories = rawStories.map((s) => ({
     id: s.id,
@@ -33,10 +57,8 @@ export async function runTweetAgent(
     commentCount: s.descendants || 0,
   }));
 
-  // Step 2: Filter trending stories in code
   const trending = stories.filter((s) => s.score > 100 || s.commentCount > 50);
 
-  // Step 3: Generate each tweet individually (parallel, no agent loop)
   const results = await Promise.allSettled(
     trending.map(async (story) => {
       const tweet = await generateSingleTweet({
@@ -59,11 +81,22 @@ export async function runTweetAgent(
     }),
   );
 
-  return results
+  const successfulResults = results
     .filter(
       (r): r is PromiseFulfilledResult<TweetResult> => r.status === "fulfilled",
     )
     .map((r) => r.value);
+
+  if (successfulResults.length === 0 && trending.length > 0) {
+    const firstError = results.find(
+      (r) => r.status === "rejected",
+    ) as PromiseRejectedResult;
+    throw (
+      firstError?.reason || new Error("All AI agent generation tasks failed")
+    );
+  }
+
+  return successfulResults;
 }
 
 export async function generateViralTweet(story: {
@@ -72,37 +105,9 @@ export async function generateViralTweet(story: {
   score: number;
   by: string;
 }): Promise<string> {
-  const { text } = await generateText({
-    model,
-    prompt: `You are a tech educator on Twitter/X who explains complex topics in a way that makes people say "I finally get it now."
+  const prompt = `You are a tech educator on Twitter/X who explains complex topics in a way that makes people say "I finally get it now."\n\nWrite an educational tweet thread about this Hacker News story. Your goal is to make readers LEARN something valuable.\n\nTitle: ${story.title}\nURL: ${story.url}\nScore: ${story.score} points\n\nYour tweet should:\n1. Start with a clear hook that states WHAT this is about\n2. Explain WHY it matters (the real-world impact or problem it solves)\n3. Include HOW it works or what makes it different (technical insight)\n4. End with a key takeaway or implication people should understand\n5. Include the URL\n\nFormat:\n- Write 3-5 clear, informative sentences\n- Use plain English - explain like you're teaching a smart colleague\n- Focus on insight and understanding, not hype\n- Total around 280-500 characters (can be longer if needed for clarity)\n- No hashtags, no emoji spam\n- Natural, conversational tone\n\nReturn ONLY the tweet text. No explanation, no quotes.`;
 
-Write an educational tweet thread about this Hacker News story. Your goal is to make readers LEARN something valuable.
-
-Title: ${story.title}
-URL: ${story.url}
-Score: ${story.score} points
-
-Your tweet should:
-1. Start with a clear hook that states WHAT this is about
-2. Explain WHY it matters (the real-world impact or problem it solves)
-3. Include HOW it works or what makes it different (technical insight)
-4. End with a key takeaway or implication people should understand
-5. Include the URL
-
-Format:
-- Write 3-5 clear, informative sentences
-- Use plain English - explain like you're teaching a smart colleague
-- Focus on insight and understanding, not hype
-- Total around 280-500 characters (can be longer if needed for clarity)
-- No hashtags, no emoji spam
-- Natural, conversational tone
-
-Example style:
-"Secure LLM scripting is a way to let AI models execute code safely in sandboxed environments. Why it matters: Until now, giving LLMs code execution meant risking system access. This uses formal verification + runtime isolation to prove the code can't escape. Game changer for autonomous agents. [url]"
-
-Return ONLY the tweet text. No explanation, no quotes.`,
-  });
-
+  const text = await generateTextFromGemini(prompt, 700);
   return text.trim();
 }
 
@@ -112,35 +117,34 @@ export async function generateSingleTweet(story: {
   score: number;
   by: string;
 }): Promise<string> {
-  const { text } = await generateText({
-    model,
-    prompt: `You are a developer on Twitter/X with a distinct, slightly cynical but insightful voice (similar to @dishantwt_). You critique abstractions, care about the "craft" of coding, and share raw thoughts without filtering for corporate speak.
+  const prompt = `You are an authentic, colloquial software engineer sharing a link on Twitter (X). You speak casually and use standard Twitter lingo—not overly corporate, not overly dramatic, just a regular dev sharing a link.
 
-Write a tweet about this Hacker News story:
+Write a single tweet sharing this Hacker News story:
 Title: ${story.title}
 URL: ${story.url}
-Score: ${story.score} points
-Author: ${story.by}
 
-Style instructions:
-- Use lowercase keywords or full lowercase for the "vibe" (optional but encouraged).
-- Be direct and short. No fluff.
-- Express a strong opinion. Is this dead on arrival? Is it actually useful? Does it make you want to quit coding or code more?
-- Use words like "bro", "dead on arrival", "insane", "craft", "wild".
-- Feel free to be skeptical of AI hype or overly complex tools.
-- NO hashtags.
-- Include the URL code at the end.
+STRICT RULES to prevent sounding like an AI:
+1. MAX 280 CHARACTERS total. Must be short enough to tweet.
+2. Do NOT wrap the output in quotes (""). Output the exact text and URL.
+3. Keep it casual. Lowercase formatting is fine. Avoid robot-speak like "delving into", "groundbreaking", or "another day another vuln".
+4. Do NOT use hashtags (#) or emojis.
+5. Just give one brief, casual thought, observation, or unenthusiastic summary of why the link is worth clicking, followed by the URL on a new line.
+6. Make it sound like a real person quickly typing a thought on their phone.
+7. No rhetorical questions ending with question marks. No preachy moral lessons.
 
-Examples of the vibe:
-"abstraction that doesn't make things easier to understand or implement is dead on arrival"
-"writing code by hand was the most fun thing about cs, it was a craft"
-"bro disappeared like he never existed"
+Example styles:
+"actually a solid breakdown of how postgres handles mvcc"
+"we've gone full circle on server side rendering"
+"this explains the recent redis drama pretty well"
+"i am entirely too tired to read another post about kubernetes right now"
 
-Your tweet should sound like a late-night thought from a developer who has seen too much bad code.
+Format:
+[your short thought]
+[URL]
 
-Return ONLY the tweet text.`,
-  });
+Return ONLY the final tweet text.`;
 
+  const text = await generateTextFromGemini(prompt, 256);
   return text.trim();
 }
 
@@ -150,54 +154,9 @@ export async function generateLinkedInPost(story: {
   score: number;
   by: string;
 }): Promise<string> {
-  const { text } = await generateText({
-    model,
-    prompt: `You are a tech professional who shares insightful LinkedIn posts that educate your network about emerging technologies and industry trends.
+  const prompt = `You are a tech professional who shares insightful LinkedIn posts that educate your network about emerging technologies and industry trends.\n\nWrite a LinkedIn post about this Hacker News story that provides real value and knowledge to your professional network.\n\nTitle: ${story.title}\nURL: ${story.url}\nScore: ${story.score} points\nAuthor: ${story.by}\n\nStructure your post to maximize learning:\n\n1. Opening Hook (1 sentence): State what this is and why it matters\n2. The Problem/Context (2-3 sentences): Explain the challenge or gap this addresses\n3. The Solution/Innovation (3-4 sentences): How it works, what makes it different, key technical insights\n4. Impact & Implications (2-3 sentences): Real-world applications, who benefits, what changes\n5. Key Takeaway (1-2 sentences): The main lesson or insight professionals should remember\n6. Link: Include the URL at the end\n\nStyle Guidelines:\n- Professional but conversational tone\n- Use paragraphs with line breaks for readability\n- Focus on education and insight, not hype\n- Make complex topics accessible\n- 800-1200 characters total (LinkedIn's sweet spot)\n\nReturn ONLY the LinkedIn post text.`;
 
-Write a LinkedIn post about this Hacker News story that provides real value and knowledge to your professional network.
-
-Title: ${story.title}
-URL: ${story.url}
-Score: ${story.score} points
-Author: ${story.by}
-
-Structure your post to maximize learning:
-
-1. **Opening Hook** (1 sentence): State what this is and why it matters
-2. **The Problem/Context** (2-3 sentences): Explain the challenge or gap this addresses
-3. **The Solution/Innovation** (3-4 sentences): How it works, what makes it different, key technical insights
-4. **Impact & Implications** (2-3 sentences): Real-world applications, who benefits, what changes
-5. **Key Takeaway** (1-2 sentences): The main lesson or insight professionals should remember
-6. **Link**: Include the URL at the end
-
-Style Guidelines:
-- Professional but conversational tone
-- Use paragraphs with line breaks for readability
-- Focus on education and insight, not hype
-- Make complex topics accessible
-- 800-1200 characters total (LinkedIn's sweet spot)
-- No excessive emojis (max 2-3 relevant ones)
-- No hashtag spam (max 3 relevant hashtags at the very end)
-- Write like you're sharing knowledge with colleagues, not selling
-
-Example structure:
-"Secure LLM scripting just became a reality, and it's a bigger deal than most people realize.
-
-Here's the challenge: Giving AI models the ability to execute code has always been risky. One wrong move and you're handing over system access to a black box. This has blocked countless use cases for autonomous agents.
-
-Enter MLLD - a framework that uses formal verification + runtime isolation to prove code can't escape its sandbox. Think of it like a mathematical guarantee that the AI's code is safe before it runs. The tech combines symbolic execution (analyzing all possible code paths) with containerization that's provably secure.
-
-Real-world impact: This unlocks autonomous agents that can actually interact with systems safely. Developer tools that write AND test code. AI assistants that can execute tasks without human verification at every step.
-
-The key insight: Security isn't about hoping the AI behaves - it's about making unsafe behavior mathematically impossible.
-
-[URL]
-
-#AI #CyberSecurity #SoftwareEngineering"
-
-Return ONLY the LinkedIn post text. No explanation, no quotes.`,
-  });
-
+  const text = await generateTextFromGemini(prompt, 900);
   return text.trim();
 }
 
@@ -207,57 +166,10 @@ export async function generateViralLinkedInPost(story: {
   score: number;
   by: string;
 }): Promise<string> {
-  const { text } = await generateText({
-    model,
-    prompt: `You are a thought leader on LinkedIn who writes posts that get thousands of views because they make complex tech concepts crystal clear and show why they matter to professionals.
+  const prompt = `You are a thought leader on LinkedIn who writes posts that get thousands of views because they make complex tech concepts crystal clear and show why they matter to professionals.\n\nWrite a LinkedIn post about this Hacker News story that will resonate with technical professionals and business leaders alike.\n\nTitle: ${story.title}\nURL: ${story.url}\nScore: ${story.score} points\n\nYour post should follow this proven LinkedIn engagement formula:\n\n1. Pattern Interrupt Opening (1 sentence): Start with a surprising insight or contrarian take that makes people stop scrolling\n2. Make It Relatable (2 sentences): Connect to a pain point or experience your audience knows\n3. Explain the Innovation (3-4 sentences): What it is, how it works, what's actually new (not just buzzwords)\n4. Show the Impact (2-3 sentences): Who this helps, what becomes possible, why it matters beyond tech\n5. Provoke Thought (1-2 sentences): End with a question, implication, or perspective that invites engagement\n6. Include URL\n\nReturn ONLY the LinkedIn post text.`;
 
-Write a LinkedIn post about this Hacker News story that will resonate with technical professionals and business leaders alike.
-
-Title: ${story.title}
-URL: ${story.url}
-Score: ${story.score} points
-
-Your post should follow this proven LinkedIn engagement formula:
-
-1. **Pattern Interrupt Opening** (1 sentence): Start with a surprising insight or contrarian take that makes people stop scrolling
-2. **Make It Relatable** (2 sentences): Connect to a pain point or experience your audience knows
-3. **Explain the Innovation** (3-4 sentences): What it is, how it works, what's actually new (not just buzzwords)
-4. **Show the Impact** (2-3 sentences): Who this helps, what becomes possible, why it matters beyond tech
-5. **Provoke Thought** (1-2 sentences): End with a question, implication, or perspective that invites engagement
-6. **Include URL**
-
-Style:
-- Mix short and medium sentences for rhythm
-- Use line breaks generously (1-2 sentence paragraphs)
-- Professional tone but show your personality
-- Make technical readers feel smart, non-technical readers feel included
-- 900-1300 characters
-- 2-4 relevant emojis maximum
-- 3-5 hashtags at the end only
-- Write to teach, inspire, and spark discussion
-
-Example tone:
-"Most developers are solving the wrong AI security problem. 🔒
-
-We're obsessed with making AI models 'aligned' - teaching them to want to do the right thing. But here's the issue: That's governance by wishes.
-
-MLLD takes a radically different approach. Instead of hoping the AI behaves, it makes misbehavior mathematically impossible. How? Formal verification proves the code can't escape before it runs. Like building a prison that's impossible to break out of, not finding a prisoner who promises not to escape.
-
-This matters beyond tech: It's the difference between trusting AI and proving AI is trustworthy. One scales. One doesn't.
-
-For engineering teams: This is how autonomous agents ship to production without becoming existential risks.
-For business leaders: This is how AI moves from experimental to operational.
-
-The real unlock isn't smarter AI. It's provably safe AI.
-
-What's your team's biggest blocker to deploying AI in production? 💭
-
-[URL]
-
-#ArtificialIntelligence #EngineeringSecurity #TechLeadership #Innovation"
-
-Return ONLY the LinkedIn post text. No explanation, no quotes.`,
-  });
-
+  const text = await generateTextFromGemini(prompt, 1100);
   return text.trim();
 }
+
+export { generateTextFromGemini };

@@ -13,7 +13,7 @@ export async function POST() {
     return NextResponse.json(
       {
         error: isRateLimit
-          ? "OpenRouter rate limit hit. Please wait ~30 seconds and try again."
+          ? "Rate limit hit. Please wait and try again."
           : `AI Agent failed: ${message}`,
       },
       { status: 500 },

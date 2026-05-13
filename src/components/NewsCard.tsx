@@ -96,7 +96,7 @@ export default function NewsCard({ story, index }: NewsCardProps) {
       <div className="p-5">
         {/* Header */}
         <div className="flex items-start gap-4">
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm">
+          <div className="shrink-0 w-10 h-10 rounded-lg bg-linear-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm">
             {index + 1}
           </div>
           <div className="flex-1 min-w-0">
@@ -114,7 +114,7 @@ export default function NewsCard({ story, index }: NewsCardProps) {
                 className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-orange-500 mt-1 flex items-center gap-1 w-fit"
               >
                 <svg
-                  className="w-3 h-3 flex-shrink-0"
+                  className="w-3 h-3 shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

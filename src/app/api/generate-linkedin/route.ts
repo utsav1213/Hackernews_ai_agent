@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Failed to generate LinkedIn post. Make sure OPENROUTER_API_KEY is set.",
+          "Failed to generate LinkedIn post. Make sure GEMINI_API_KEY is set.",
       },
       { status: 500 },
     );

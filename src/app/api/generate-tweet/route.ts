@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     console.error("Failed to generate tweet:", error);
     return NextResponse.json(
       {
-        error: "Failed to generate tweet. Make sure OPENROUTER_API_KEY is set.",
+        error: "Failed to generate tweet. Make sure GEMINI_API_KEY is set.",
       },
       { status: 500 },
     );
