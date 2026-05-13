@@ -31,6 +31,64 @@ async function generateTextFromGemini(prompt: string, maxOutputTokens = 512) {
   return text;
 }
 
+export async function generateTweetFromImage(
+  imageBase64: string,
+  mimeType: string,
+): Promise<string> {
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+
+  if (!GEMINI_API_KEY) throw new Error("Missing GEMINI_API_KEY");
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+
+  const prompt = `You are a developer sharing something you just learned or read today. 
+Write a short, engaging tweet showcasing this image.
+Keep it authentic, casual, and insightful.
+Include a brief observation, takeaway, or excitement about what's in the image.
+STRICT RULES:
+1. MAX 280 CHARACTERS.
+2. DO NOT use hashtags or emojis.
+3. Completely lowercase or casual casing is fine. Do NOT wrap output in quotes.
+4. Keep it under 2 sentences. Treat it as a quick thought.
+
+Return ONLY the tweet text.`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            { text: prompt },
+            {
+              inline_data: {
+                mime_type: mimeType,
+                data: imageBase64,
+              },
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.3,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Gemini API error: ${res.status} ${body}`);
+  }
+
+  const json = await res.json();
+  const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  return text.trim();
+}
+
 export interface TweetResult {
   story: {
     id: number;
