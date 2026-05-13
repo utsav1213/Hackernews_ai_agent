@@ -163,7 +163,7 @@ export async function generateViralTweet(story: {
 }): Promise<string> {
   const prompt = `You are a tech educator on Twitter/X who explains complex topics in a way that makes people say "I finally get it now."\n\nWrite an educational tweet thread about this Hacker News story. Your goal is to make readers LEARN something valuable.\n\nTitle: ${story.title}\nURL: ${story.url}\nScore: ${story.score} points\n\nYour tweet should:\n1. Start with a clear hook that states WHAT this is about\n2. Explain WHY it matters (the real-world impact or problem it solves)\n3. Include HOW it works or what makes it different (technical insight)\n4. End with a key takeaway or implication people should understand\n5. Include the URL\n\nFormat:\n- Write 3-5 clear, informative sentences\n- Use plain English - explain like you're teaching a smart colleague\n- Focus on insight and understanding, not hype\n- Total around 280-500 characters (can be longer if needed for clarity)\n- No hashtags, no emoji spam\n- Natural, conversational tone\n\nReturn ONLY the tweet text. No explanation, no quotes.`;
 
-  const text = await generateTextFromGemini(prompt, 700);
+  const text = await generateTextFromGemini(prompt);
   return text.trim();
 }
 
@@ -200,7 +200,7 @@ Format:
 
 Return ONLY the final tweet text.`;
 
-  const text = await generateTextFromGemini(prompt, 256);
+  const text = await generateTextFromGemini(prompt);
   return text.trim();
 }
 
@@ -212,7 +212,7 @@ export async function generateLinkedInPost(story: {
 }): Promise<string> {
   const prompt = `You are a tech professional who shares insightful LinkedIn posts that educate your network about emerging technologies and industry trends.\n\nWrite a LinkedIn post about this Hacker News story that provides real value and knowledge to your professional network.\n\nTitle: ${story.title}\nURL: ${story.url}\nScore: ${story.score} points\nAuthor: ${story.by}\n\nStructure your post to maximize learning:\n\n1. Opening Hook (1 sentence): State what this is and why it matters\n2. The Problem/Context (2-3 sentences): Explain the challenge or gap this addresses\n3. The Solution/Innovation (3-4 sentences): How it works, what makes it different, key technical insights\n4. Impact & Implications (2-3 sentences): Real-world applications, who benefits, what changes\n5. Key Takeaway (1-2 sentences): The main lesson or insight professionals should remember\n6. Link: Include the URL at the end\n\nStyle Guidelines:\n- Professional but conversational tone\n- Use paragraphs with line breaks for readability\n- Focus on education and insight, not hype\n- Make complex topics accessible\n- 800-1200 characters total (LinkedIn's sweet spot)\n\nReturn ONLY the LinkedIn post text.`;
 
-  const text = await generateTextFromGemini(prompt, 900);
+  const text = await generateTextFromGemini(prompt);
   return text.trim();
 }
 
@@ -224,7 +224,7 @@ export async function generateViralLinkedInPost(story: {
 }): Promise<string> {
   const prompt = `You are a thought leader on LinkedIn who writes posts that get thousands of views because they make complex tech concepts crystal clear and show why they matter to professionals.\n\nWrite a LinkedIn post about this Hacker News story that will resonate with technical professionals and business leaders alike.\n\nTitle: ${story.title}\nURL: ${story.url}\nScore: ${story.score} points\n\nYour post should follow this proven LinkedIn engagement formula:\n\n1. Pattern Interrupt Opening (1 sentence): Start with a surprising insight or contrarian take that makes people stop scrolling\n2. Make It Relatable (2 sentences): Connect to a pain point or experience your audience knows\n3. Explain the Innovation (3-4 sentences): What it is, how it works, what's actually new (not just buzzwords)\n4. Show the Impact (2-3 sentences): Who this helps, what becomes possible, why it matters beyond tech\n5. Provoke Thought (1-2 sentences): End with a question, implication, or perspective that invites engagement\n6. Include URL\n\nReturn ONLY the LinkedIn post text.`;
 
-  const text = await generateTextFromGemini(prompt, 1100);
+  const text = await generateTextFromGemini(prompt);
   return text.trim();
 }
 

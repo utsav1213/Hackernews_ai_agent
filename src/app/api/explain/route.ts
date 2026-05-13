@@ -33,7 +33,7 @@ Rules:
 - Focus on *effectiveness*—the reader should walk away understanding the "what", "how", and "so what".
 - Output raw JSON only.`;
 
-    const rawText = await generateTextFromGemini(prompt, 1200);
+    const rawText = await generateTextFromGemini(prompt);
 
     // Extract JSON — strip any accidental markdown fences
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
