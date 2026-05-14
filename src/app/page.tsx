@@ -1,6 +1,7 @@
 import { fetchTopStories } from "@/lib/hackernews";
 import AgentPanel from "@/components/AgentPanel";
 import PhotoTweetPanel from "@/components/PhotoTweetPanel";
+import OrganicTweetPanel from "@/components/OrganicTweetPanel";
 import NewsTabs from "@/components/NewsTabs";
 
 export const revalidate = 300; // ISR: regenerate every 5 minutes
@@ -52,6 +53,9 @@ export default async function Home() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+        {/* Organic Viral Tweet Generator */}
+        <OrganicTweetPanel />
+
         {/* Study & Learn: Photo to Tweet */}
         <PhotoTweetPanel />
 

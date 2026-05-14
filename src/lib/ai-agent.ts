@@ -196,9 +196,47 @@ Example styles:
 
 Format:
 [your short thought]
-[URL]
+[URL]`;
 
-Return ONLY the final tweet text.`;
+  const text = await generateTextFromGemini(prompt);
+  return text.trim();
+}
+
+export async function generateOrganicViralTweet(
+  topic?: string,
+): Promise<string> {
+  const topicContext = topic
+    ? `The topic must involve: ${topic}.`
+    : "Choose a highly debated topic like frontend frameworks, database scaling, system design, or tech career progression.";
+
+  const prompt = `You are a top 1% software engineering influencer on Twitter/X. Your goal is to maximize REACH (Retweets, Bookmarks, and Quote Tweets).
+Write a single, stand-alone viral tech tweet. No links.
+
+${topicContext}
+
+RANDOMLY CHOOSE EXACTLY ONE of the following reach-maximizing formats:
+
+FORMAT 1: The Polarizing "Hot Take" (Optimized for Quote Tweets)
+Directly attack a widely accepted "best practice" or a beloved tech stack. Claim it's a trap, wastes time, or is over-engineered. Make people angry enough to quote tweet you, but be fundamentally correct enough that senior devs will defend you.
+
+FORMAT 2: The Actionable "Cheat Code" (Optimized for Bookmarks)
+Drop a highly specific, immediately useful technical tip or architecture rule that 90% of developers don't know but need to. Make it sound like a secret trick you learned the hard way.
+
+FORMAT 3: The "Unspoken Rule" (Optimized for Retweets)
+A blunt, harsh truth about the software industry, hiring, or writing code that everyone secretly knows but nobody says out loud. People will retweet this to validate their own feelings.
+
+FORMAT 4: The Mindset Flip (Optimized for Retweets)
+"Junior devs focus on X. Senior devs focus on Y." Explain a profound shift in thinking that happens as you gain experience.
+
+STRICT RULES:
+1. MAX 280 CHARACTERS total.
+2. DO NOT ask questions at the end. State your opinion as undisputed absolute fact.
+3. Keep it VERY casual. Lowercase formatting is fine. 
+4. NO AI-speak ("delving into", "crucial", "testament").
+5. NO generic cliches (no Jira, coffee, or centering divs).
+6. Do NOT wrap output in quotes. No hashtags.
+
+Return ONLY the exact tweet text.`;
 
   const text = await generateTextFromGemini(prompt);
   return text.trim();
