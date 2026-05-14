@@ -2,8 +2,37 @@
 
 import { useState } from "react";
 
+const FORMAT_OPTIONS = [
+  { id: "random", label: "Surprise Me (Random)" },
+  {
+    id: "Formula A: The Relatable Reality - Focus on the exhausting or funny reality of coding/learning.",
+    label: "Relatable Reality (High Shares)",
+  },
+  {
+    id: "Formula B: The Contrarian / Pattern Interrupt - Start with a strong hook like 'Unpopular opinion:' or 'The biggest lie in tech:'.",
+    label: "Contrarian / Unpopular (High Replies)",
+  },
+  {
+    id: "Formula C: The Mini-Transformation Story - From failing to succeeding. Problem -> Struggle -> Turning Point -> Result.",
+    label: "Transformation Story (High Follows)",
+  },
+  {
+    id: "Formula D: The Curiosity Hook - E.g., 'I found a faster way to learn DSA.' or 'Nobody tells beginners this.'",
+    label: "Curiosity Hook (High Clicks)",
+  },
+  {
+    id: "Formula E: The Value List - E.g., '7 websites every CS student should bookmark.'",
+    label: "Value List (High Saves)",
+  },
+  {
+    id: "Formula F: Build-In-Public - Share a real progress update, project build, or 'today I learned' tech insight.",
+    label: "Build-in-Public (High Engagement)",
+  },
+];
+
 export default function OrganicTweetPanel() {
   const [topic, setTopic] = useState("");
+  const [format, setFormat] = useState("random");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -14,7 +43,7 @@ export default function OrganicTweetPanel() {
       const res = await fetch("/api/generate-organic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic }),
+        body: JSON.stringify({ topic, format }),
       });
       const data = await res.json();
       if (data.error) {
@@ -88,6 +117,27 @@ export default function OrganicTweetPanel() {
               }
             }}
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+            Tweet Format
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {FORMAT_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => setFormat(opt.id)}
+                className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+                  format === opt.id
+                    ? "bg-indigo-100 dark:bg-indigo-900/30 border-indigo-500 text-indigo-700 dark:text-indigo-300 font-medium"
+                    : "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <button

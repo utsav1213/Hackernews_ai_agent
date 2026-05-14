@@ -204,37 +204,38 @@ Format:
 
 export async function generateOrganicViralTweet(
   topic?: string,
+  format?: string,
 ): Promise<string> {
   const topicContext = topic
     ? `The topic must involve: ${topic}.`
-    : "Choose a highly debated topic like frontend frameworks, database scaling, system design, or tech career progression.";
+    : "Choose a topic like frontend, backend, DSA, LeetCode, debugging, or learning to code.";
 
-  const prompt = `You are a top 1% software engineering influencer on Twitter/X. Your goal is to maximize REACH (Retweets, Bookmarks, and Quote Tweets).
+  const formatSelection =
+    format && format !== "random"
+      ? `You MUST use this EXACT format:\n${format}`
+      : `Your tweet MUST randomly choose exactly ONE of these proven viral formats inspired by top tech creators:
+Formula A: The Relatable Reality - Focus on the exhausting or funny reality of coding/learning.
+Formula B: The Contrarian / Pattern Interrupt - Start with a strong hook like "Unpopular opinion:" or "The biggest lie in tech:".
+Formula C: The Mini-Transformation Story - From failing to succeeding. Problem -> Struggle -> Turning Point -> Result.
+Formula D: The Curiosity Hook - E.g., "I found a faster way to learn DSA." or "Nobody tells beginners this."
+Formula E: The Value List - E.g., "7 websites every CS student should bookmark."
+Formula F: Build-In-Public - Share a real progress update, project build, or "today I learned" tech insight.`;
+
+  const prompt = `You are a tech creator on Twitter/X building an audience. 
 Write a single, stand-alone viral tech tweet. No links.
 
 ${topicContext}
 
-RANDOMLY CHOOSE EXACTLY ONE of the following reach-maximizing formats:
+${formatSelection}
 
-FORMAT 1: The Polarizing "Hot Take" (Optimized for Quote Tweets)
-Directly attack a widely accepted "best practice" or a beloved tech stack. Claim it's a trap, wastes time, or is over-engineered. Make people angry enough to quote tweet you, but be fundamentally correct enough that senior devs will defend you.
-
-FORMAT 2: The Actionable "Cheat Code" (Optimized for Bookmarks)
-Drop a highly specific, immediately useful technical tip or architecture rule that 90% of developers don't know but need to. Make it sound like a secret trick you learned the hard way.
-
-FORMAT 3: The "Unspoken Rule" (Optimized for Retweets)
-A blunt, harsh truth about the software industry, hiring, or writing code that everyone secretly knows but nobody says out loud. People will retweet this to validate their own feelings.
-
-FORMAT 4: The Mindset Flip (Optimized for Retweets)
-"Junior devs focus on X. Senior devs focus on Y." Explain a profound shift in thinking that happens as you gain experience.
-
-STRICT RULES:
+STRICT RULES for maximum reach:
 1. MAX 280 CHARACTERS total.
-2. DO NOT ask questions at the end. State your opinion as undisputed absolute fact.
-3. Keep it VERY casual. Lowercase formatting is fine. 
-4. NO AI-speak ("delving into", "crucial", "testament").
-5. NO generic cliches (no Jira, coffee, or centering divs).
-6. Do NOT wrap output in quotes. No hashtags.
+2. 1-4 short lines max. Use line breaks for pacing. Mobile friendly.
+3. Keep it VERY casual and natural. Do NOT use perfect grammar everywhere. Lowercase is fine.
+4. NO AI-speak ("delving into", "crucial", "in today's digital landscape", "testament").
+5. Do NOT sound corporate. Write like a real human typing on their phone.
+6. NO questions at the end. State your opinion as absolute fact.
+7. Do NOT wrap output in quotes. No hashtags. No emojis.
 
 Return ONLY the exact tweet text.`;
 

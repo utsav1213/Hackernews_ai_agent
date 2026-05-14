@@ -4,9 +4,9 @@ import { generateOrganicViralTweet } from "@/lib/ai-agent";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { topic } = body;
+    const { topic, format } = body;
 
-    const tweet = await generateOrganicViralTweet(topic);
+    const tweet = await generateOrganicViralTweet(topic, format);
     return NextResponse.json({ tweet });
   } catch (error) {
     console.error("Failed to generate organic tweet:", error);
